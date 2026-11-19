@@ -110,6 +110,10 @@ h1 {
   text-underline-offset: 0.18em;
 }
 
+.repo-link-star::before {
+  content: "★ ";
+}
+
 .btn-star {
   display: inline-flex;
   align-items: center;
@@ -118,10 +122,6 @@ h1 {
   background: #24292f;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.btn-star::before {
-  content: "★";
 }
 
 .btn-star:hover {

@@ -18,7 +18,7 @@ Client-side Pinterest image downloader for GitHub Pages.
 From GitHub Pages, Pinterest often exposes only the first page of pins in a board. For the full set:
 
 1. Open the board on Pinterest (for Unorganized Ideas: `https://www.pinterest.com/USERNAME/_quick_saves/`).
-2. Drag the **[export bookmarklet](https://daylenghuyen.github.io/pinfetch/)** from the live site into your bookmarks bar (or use the link on the page).
+2. Drag the **[export bookmarklet](https://daylennguyen.github.io/pinfetch/)** from the live site into your bookmarks bar (or use the link on the page).
 3. Run it on that board tab; it saves a `.json` file.
 4. Import that JSON on **Pinfetch** and download the zip.
 
@@ -33,11 +33,11 @@ Zip downloads use a CORS-safe fallback (`images.weserv.nl`) when Pinterest’s C
 
 ## GitHub Pages
 
-This repo is a **project site** (not `daylenghuyen.github.io` root), same pattern as [CryptokittiesFamilyTree](https://github.com/daylenghuyen/CryptokittiesFamilyTree):
+This repo is a **project site** (not `daylennguyen.github.io` root), same pattern as [CryptokittiesFamilyTree](https://github.com/daylennguyen/CryptokittiesFamilyTree):
 
 **Settings → Pages → Deploy from branch → `main` / `(root)`**
 
-Published URL: `https://daylenghuyen.github.io/pinfetch/`
+Published URL: `https://daylennguyen.github.io/pinfetch/`
 
 ## License
 
