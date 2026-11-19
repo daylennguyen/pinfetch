@@ -76,6 +76,10 @@ test("buildExportBookmarklet returns a javascript: URL", () => {
   const href = buildExportBookmarklet();
   assert.match(href, /^javascript:/);
   assert.ok(href.length > 200);
+  const body = decodeURIComponent(href.replace(/^javascript:/, ""));
+  assert.match(body, /X-Pinterest-AppState/);
+  assert.match(body, /X-Pinterest-PWS-Handler/);
+  assert.match(body, /filter_section_pins/);
 });
 
 test("shouldProxyFirst is true for pinimg CDN URLs", () => {

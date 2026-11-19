@@ -43,8 +43,15 @@ zipBtn.addEventListener("click", () => downloadZip());
 copyBtn.addEventListener("click", () => copyUrls());
 resetBtn.addEventListener("click", () => resetUi());
 importJson.addEventListener("change", (event) => importPinExport(event));
-bookmarkletLink.href = buildExportBookmarklet();
-bookmarkletLink.title = "Run while viewing a Pinterest board tab";
+const bookmarkletHref = buildExportBookmarklet();
+bookmarkletLink.href = bookmarkletHref;
+bookmarkletLink.draggable = true;
+bookmarkletLink.title = "Drag to your bookmarks bar, then run it on a Pinterest board tab";
+bookmarkletLink.addEventListener("click", (event) => {
+  event.preventDefault();
+  statusNote.textContent =
+    "Drag the export bookmarklet link to your bookmarks bar. Open a board on Pinterest (e.g. /USERNAME/arcane/), then click the bookmark.";
+});
 
 function resetUi() {
   currentAssets = null;
