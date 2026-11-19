@@ -80,6 +80,9 @@ test("buildExportBookmarklet returns a javascript: URL", () => {
   assert.match(body, /X-Pinterest-AppState/);
   assert.match(body, /X-Pinterest-PWS-Handler/);
   assert.match(body, /filter_section_pins/);
+  assert.match(body, /X-Pinterest-Source-Url/);
+  assert.match(body, /pin\.node_id/);
+  assert.match(body, /showSaveFilePicker/);
 });
 
 test("shouldProxyFirst is true for pinimg CDN URLs", () => {

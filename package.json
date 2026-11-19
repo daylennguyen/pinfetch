@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./styles.css -m",
     "test": "node --test tests/*.test.js"
   },
   "devDependencies": {
-    "jszip": "^3.10.1"
+    "@tailwindcss/cli": "^4.3.5",
+    "jszip": "^3.10.1",
+    "tailwindcss": "^4.3.5"
   }
 }

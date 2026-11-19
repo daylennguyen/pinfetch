@@ -25,6 +25,8 @@ From GitHub Pages, Pinterest often exposes only the first page of pins in a boar
 ## Local preview
 
 ```bash
+npm ci
+npm run build:css   # edit src/input.css, then rebuild → styles.css
 npx --yes serve .
 npm test
 ```

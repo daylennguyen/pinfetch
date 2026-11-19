@@ -3,54 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pinfetch</title>
+  <title>Pinfetch — Pinterest image export</title>
+  <meta name="description" content="Download full-quality images from public Pinterest profiles and boards as a zip, right in your browser." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://images.weserv.nl" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Syne:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="relative">
   <a class="skip-link" href="#main-panel">Skip to main content</a>
   <div class="grain" aria-hidden="true"></div>
-  <div class="shell">
-    <header class="hero">
-      <p class="eyebrow">daylennguyen.github.io/pinfetch</p>
-      <nav class="repo-links" aria-label="Repository links">
+
+  <div class="relative z-10 mx-auto w-full max-w-6xl px-4 pb-16 pt-10 md:px-8 md:pt-14">
+    <header class="relative mb-10 md:mb-12">
+      <div class="hero-slash" aria-hidden="true"></div>
+
+      <div class="reveal-up flex flex-wrap items-center gap-2 md:gap-3">
+        <p
+          class="m-0 font-[family-name:var(--font-label)] text-[0.68rem] font-bold uppercase tracking-[0.2em] text-vermillion-deep"
+          translate="no"
+        >
+          daylennguyen.github.io/pinfetch
+        </p>
+        <span class="hidden text-ink/25 sm:inline" aria-hidden="true">·</span>
+        <span class="font-[family-name:var(--font-label)] text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+          Contact-sheet export
+        </span>
+      </div>
+
+      <nav class="reveal-up reveal-up-delay-1 mt-4 flex flex-wrap gap-2" aria-label="Repository links">
         <a
-          class="btn btn-star"
+          class="btn btn-nav"
           href="https://github.com/daylennguyen"
           rel="noopener noreferrer"
           translate="no"
         >My GitHub</a>
         <a
-          class="repo-link"
+          class="btn btn-repo"
           href="https://github.com/daylennguyen/pinfetch"
           rel="noopener noreferrer"
           translate="no"
         >Repository</a>
         <a
-          class="repo-link repo-link-star"
+          class="btn btn-repo btn-repo-star"
           href="https://github.com/daylennguyen/pinfetch"
           rel="noopener noreferrer"
           translate="no"
-        >Star Pinfetch</a>
+        >★ Star Pinfetch</a>
       </nav>
-      <h1>Pinfetch</h1>
-      <p class="lede">
-        Download full-quality images from a public Pinterest profile or board.
-        Profile URLs pull <strong>Unorganized Ideas</strong> (boardless saves at the bottom of a profile).
-        Board URLs pull a specific folder, such as <code>…/animals/</code>.
-      </p>
+
+      <div class="reveal-up reveal-up-delay-2 mt-8 max-w-3xl md:mt-10">
+        <h1
+          class="m-0 font-[family-name:var(--font-display)] text-[clamp(2.75rem,8vw,5rem)] leading-[0.92] tracking-[-0.02em] text-balance text-ink"
+        >
+          Pinfetch
+        </h1>
+        <p class="mt-5 max-w-2xl text-lg leading-relaxed text-ink-muted md:text-[1.15rem]">
+          Pull <strong class="font-semibold text-ink">full-resolution</strong> images from a public Pinterest profile or board and pack them into a zip—entirely in the browser.
+          Profile links fetch <strong class="font-semibold text-ink">Unorganized Ideas</strong> (<code>_quick_saves</code>).
+          Board links fetch that folder, e.g. <code>…/animals/</code>.
+        </p>
+      </div>
     </header>
 
-    <main id="main-panel" class="panel">
-      <form id="source-form" class="source-form" novalidate>
-        <label class="field-label" for="source-url">Pinterest URL</label>
-        <div class="field-row">
+    <main id="main-panel" class="panel-sheet reveal-up reveal-up-delay-3 px-5 py-8 md:px-10 md:py-11">
+      <form id="source-form" class="relative z-10 space-y-3" novalidate>
+        <label
+          class="block font-[family-name:var(--font-label)] text-[0.72rem] font-bold uppercase tracking-[0.14em] text-ink"
+          for="source-url"
+        >Pinterest URL</label>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           <input
             id="source-url"
+            class="field-input"
             name="pinterest-url"
             type="url"
             inputmode="url"
@@ -60,66 +90,84 @@
             aria-describedby="form-hint"
             required
           />
-          <button type="submit" id="start-btn" class="btn btn-primary">Scan Pins</button>
+          <button type="submit" id="start-btn" class="btn btn-primary sm:shrink-0">Scan pins</button>
         </div>
-        <p id="form-hint" class="form-hint">
-          Works with profile roots, <code>/username/_saved/</code>, and board paths like
-          <code>/username/board-name/</code>.
+        <p id="form-hint" class="m-0 text-sm leading-relaxed text-ink-muted">
+          Profile roots, <code>/username/_saved/</code>, or board paths like <code>/username/board-name/</code>.
         </p>
       </form>
 
-      <div id="status-card" class="status-card" hidden aria-live="polite" aria-atomic="true">
-        <div class="status-head">
+      <div
+        id="status-card"
+        class="relative z-10 mt-8 rounded-2xl border border-ink/10 bg-paper-bright/90 p-5 md:p-6"
+        hidden
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p class="status-label">Target</p>
-            <p id="target-label" class="target-label">—</p>
+            <p class="m-0 font-[family-name:var(--font-label)] text-[0.65rem] font-bold uppercase tracking-[0.16em] text-ink-muted">Target</p>
+            <p id="target-label" class="mt-1 mb-0 font-[family-name:var(--font-display)] text-xl text-ink md:text-2xl">—</p>
           </div>
           <span id="stage-pill" class="stage-pill">Idle</span>
         </div>
-        <div class="progress-block">
+        <div class="mt-5 space-y-2">
           <progress id="progress-bar" class="progress-bar" value="0" max="100" aria-label="Download progress"></progress>
-          <p id="progress-caption" class="progress-caption">Waiting…</p>
+          <p id="progress-caption" class="m-0 text-sm text-ink-muted">Waiting…</p>
         </div>
-        <p id="status-note" class="status-note"></p>
+        <p id="status-note" class="mt-4 mb-0 text-sm leading-relaxed text-ink"></p>
       </div>
 
-      <div id="actions" class="actions" hidden>
-        <button type="button" id="zip-btn" class="btn btn-accent" disabled>Download Images (.zip)</button>
-        <button type="button" id="copy-btn" class="btn btn-ghost" disabled>Copy Image URLs</button>
+      <div id="actions" class="relative z-10 mt-6 flex flex-wrap gap-2" hidden>
+        <button type="button" id="zip-btn" class="btn btn-accent" disabled>Download images (.zip)</button>
+        <button type="button" id="copy-btn" class="btn btn-ghost" disabled>Copy image URLs</button>
         <button type="button" id="reset-btn" class="btn btn-ghost">Reset</button>
       </div>
 
-      <div class="import-block">
-        <label class="field-label" for="import-json">Import full pin export (.json)</label>
-        <input id="import-json" type="file" accept="application/json,.json" />
-        <p class="form-hint">
+      <section class="relative z-10 mt-10 rounded-2xl border border-dashed border-vermillion/35 bg-vermillion/[0.06] p-5 md:p-6">
+        <label
+          class="block font-[family-name:var(--font-label)] text-[0.72rem] font-bold uppercase tracking-[0.14em] text-vermillion-deep"
+          for="import-json"
+        >Import full pin export (.json)</label>
+        <input
+          id="import-json"
+          class="mt-3 block w-full max-w-md cursor-pointer text-sm text-ink file:mr-4 file:cursor-pointer file:rounded-full file:border-0 file:bg-ink file:px-4 file:py-2 file:font-[family-name:var(--font-label)] file:text-[0.7rem] file:font-bold file:uppercase file:tracking-wider file:text-paper-bright"
+          type="file"
+          accept="application/json,.json"
+        />
+        <p class="mt-4 mb-0 text-sm leading-relaxed text-ink-muted">
           Large boards: drag the
-          <a id="bookmarklet-link" href="#">export bookmarklet</a> to your bookmarks bar, open the board on Pinterest, run it, then import the JSON here.
-          Example board: <code>https://www.pinterest.com/USERNAME/arcane/</code>; Unorganized Ideas use <code>/_quick_saves/</code>.
+          <a id="bookmarklet-link" class="bookmarklet-chip" href="#">export bookmarklet</a>
+          to your bookmarks bar, open the board on Pinterest, run it, then import the JSON here.
+          Example: <code>https://www.pinterest.com/USERNAME/arcane/</code>; Unorganized Ideas use <code>/_quick_saves/</code>.
         </p>
-      </div>
+      </section>
 
-      <section id="results" class="results" hidden>
-        <div class="results-head">
-          <h2>Discovered assets</h2>
-          <p id="results-summary" class="results-summary"></p>
+      <section id="results" class="relative z-10 mt-12" hidden>
+        <div class="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-ink/10 pb-4">
+          <h2 class="m-0 font-[family-name:var(--font-display)] text-3xl text-ink">Discovered assets</h2>
+          <p id="results-summary" class="m-0 max-w-xl text-sm text-ink-muted"></p>
         </div>
         <div id="pin-grid" class="pin-grid" role="list"></div>
       </section>
 
-      <section class="notes">
-        <h2>How it works</h2>
-        <ul>
+      <section class="relative z-10 mt-14 border-t border-ink/10 pt-10">
+        <h2 class="m-0 font-[family-name:var(--font-display)] text-2xl text-ink">How it works</h2>
+        <ul class="mt-4 space-y-3 pl-5 text-[0.98rem] leading-relaxed text-ink-muted marker:text-vermillion">
           <li>Quick scan uses Pinterest’s public widget API; large boards may need the bookmarklet export.</li>
           <li>Unorganized Ideas use the hidden <code>_quick_saves</code> board behind profile saves.</li>
           <li>Images are packaged in the browser with JSZip; blocked CDN fetches fall back to a CORS-safe proxy.</li>
-          <li>Only <strong>public</strong> boards work from GitHub Pages.</li>
+          <li>Only <strong class="text-ink">public</strong> boards work from GitHub Pages.</li>
         </ul>
       </section>
     </main>
+
+    <footer class="mt-10 text-center font-[family-name:var(--font-label)] text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-ink-muted/80">
+      Built for archivists, mood boards, and offline inspiration
+    </footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
-  <script src="./app.js?v=5" type="module"></script>
+  <script src="./app.js?v=7" type="module"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ import {
   guessExtension,
   parsePinterestSource,
   sanitizeFileName,
-} from "./core.js";
+} from "./core.js?v=7";
 
 const form = document.getElementById("source-form");
 const sourceInput = document.getElementById("source-url");
@@ -49,8 +49,11 @@ bookmarkletLink.draggable = true;
 bookmarkletLink.title = "Drag to your bookmarks bar, then run it on a Pinterest board tab";
 bookmarkletLink.addEventListener("click", (event) => {
   event.preventDefault();
-  statusNote.textContent =
-    "Drag the export bookmarklet link to your bookmarks bar. Open a board on Pinterest (e.g. /USERNAME/arcane/), then click the bookmark.";
+  const hint =
+    "Drag this link to your bookmarks bar (do not click it here). Then open your board on Pinterest and click the bookmark once. Re-drag after Pinfetch updates — old bookmarks export without Pinterest headers and fail with 403.";
+  statusCard.hidden = false;
+  statusNote.textContent = hint;
+  alert(hint);
 });
 
 function resetUi() {
@@ -344,9 +347,11 @@ function renderResults(assets, pinCount, loadedPins, usedFeed) {
   resultsSummary.textContent = `${assets.length} image file${assets.length === 1 ? "" : "s"} from ${loadedPins} pin${loadedPins === 1 ? "" : "s"}${pinCount ? ` (${pinCount} on Pinterest)` : ""}${usedFeed ? ", using originals when available" : ", upgraded to /originals/ URLs"}.`;
   pinGrid.replaceChildren();
 
-  for (const asset of assets) {
+  for (let i = 0; i < assets.length; i++) {
+    const asset = assets[i];
     const card = document.createElement("article");
     card.className = "pin-card";
+    card.style.setProperty("--pin-delay", `${Math.min(i * 40, 600)}ms`);
     card.setAttribute("role", "listitem");
 
     const image = document.createElement("img");
