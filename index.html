@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pinfetch — Pinterest image export</title>
   <meta name="description" content="Download full-quality images from public Pinterest profiles and boards as a zip, right in your browser." />
+  <meta name="theme-color" content="#0c0a09" />
+  <meta name="color-scheme" content="dark" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -13,7 +15,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&family=Syne:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body class="relative">
   <a class="skip-link" href="#main-panel">Skip to main content</a>
@@ -32,7 +34,7 @@
         </p>
         <span class="hidden text-ink/25 sm:inline" aria-hidden="true">·</span>
         <span class="font-[family-name:var(--font-label)] text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-          Contact-sheet export
+          Darkroom contact-sheet export
         </span>
       </div>
 
@@ -99,7 +101,7 @@
 
       <div
         id="status-card"
-        class="relative z-10 mt-8 rounded-2xl border border-ink/10 bg-paper-bright/90 p-5 md:p-6"
+        class="relative z-10 mt-8 rounded-2xl border border-ink/15 bg-paper-raised/80 p-5 md:p-6"
         hidden
         aria-live="polite"
         aria-atomic="true"
@@ -124,7 +126,7 @@
         <button type="button" id="reset-btn" class="btn btn-ghost">Reset</button>
       </div>
 
-      <section class="relative z-10 mt-10 rounded-2xl border border-dashed border-vermillion/35 bg-vermillion/[0.06] p-5 md:p-6">
+      <section class="relative z-10 mt-10 rounded-2xl border border-dashed border-vermillion/40 bg-vermillion/[0.09] p-5 md:p-6">
         <label
           class="block font-[family-name:var(--font-label)] text-[0.72rem] font-bold uppercase tracking-[0.14em] text-vermillion-deep"
           for="import-json"
@@ -168,6 +170,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
-  <script src="./app.js?v=8" type="module"></script>
+  <script src="./app.js?v=9" type="module"></script>
 </body>
 </html>

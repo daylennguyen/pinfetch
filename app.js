@@ -8,7 +8,7 @@ import {
   guessExtension,
   parsePinterestSource,
   sanitizeFileName,
-} from "./core.js?v=8";
+} from "./core.js?v=9";
 
 const form = document.getElementById("source-form");
 const sourceInput = document.getElementById("source-url");
