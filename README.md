@@ -9,9 +9,9 @@ Client-side Pinterest image downloader for GitHub Pages.
 
 | Paste this | Downloads |
 | --- | --- |
-| `https://www.pinterest.com/itmedaylen/` | **Unorganized Ideas** on that profile |
-| `https://www.pinterest.com/itmedaylen/_saved/` | Same as above |
-| `https://www.pinterest.com/itmedaylen/stuff-to-buy/` | That board |
+| `https://www.pinterest.com/nationalgeographic/` | **Unorganized Ideas** on that profile |
+| `https://www.pinterest.com/nationalgeographic/_saved/` | Same as above |
+| `https://www.pinterest.com/nationalgeographic/animals/` | That board |
 
 ## Full boards (100+ pins)
 

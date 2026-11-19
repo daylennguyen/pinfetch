@@ -344,8 +344,13 @@ function renderResults(assets, pinCount, loadedPins, usedFeed) {
 
     const image = document.createElement("img");
     image.className = "pin-thumb";
-    image.alt = asset.title;
+    image.alt = asset.title || "Pinterest pin preview";
     image.loading = "lazy";
+    image.decoding = "async";
+    if (asset.width && asset.height) {
+      image.width = asset.width;
+      image.height = asset.height;
+    }
     image.src = asset.previewUrl;
 
     const meta = document.createElement("div");
@@ -391,7 +396,8 @@ async function downloadZip() {
       const { blob, proxied: usedProxy } = await fetchImageBlob(asset.downloadUrl);
       const ext = guessExtension(blob.type, asset.downloadUrl, usedProxy);
       const fileName = asset.fileName.replace(/\.[^.]+$/, "") + ext;
-      folder.file(fileName, blob);
+      const bytes = await blob.arrayBuffer();
+      folder.file(fileName, bytes);
       saved += 1;
       if (usedProxy) proxied += 1;
     } catch (error) {
@@ -412,21 +418,37 @@ async function downloadZip() {
     return;
   }
 
-  const archive = await zip.generateAsync({ type: "blob" });
+  const archive = await zip.generateAsync({
+    type: "blob",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 },
+  });
+
+  if (!archive.size) {
+    setStage("Error");
+    zipBtn.disabled = false;
+    statusNote.textContent = "Zip archive was empty. Try again or copy URLs instead.";
+    return;
+  }
+
   const url = URL.createObjectURL(archive);
   const link = document.createElement("a");
   link.href = url;
   link.download = `${folderName}.zip`;
+  link.style.display = "none";
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 
   setStage("Ready");
   zipBtn.disabled = false;
-  setProgress(100, `Zip download started (${saved} files).`);
+  setProgress(100, `Zip ready — ${archive.size.toLocaleString()} bytes, ${saved} files.`);
   statusNote.textContent =
-    `${saved} file${saved === 1 ? "" : "s"} saved` +
-    (proxied ? ` (${proxied} via CORS-safe image proxy)` : "") +
-    (failed ? `; ${failed} failed.` : ".");
+    `Downloaded ${archive.size.toLocaleString()}-byte zip with ${saved} image` +
+    `${saved === 1 ? "" : "s"}` +
+    (proxied ? ` (${proxied} via image proxy)` : "") +
+    (failed ? `; ${failed} skipped.` : ".");
 }
 
 async function copyUrls() {

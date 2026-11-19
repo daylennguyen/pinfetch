@@ -158,6 +158,47 @@ export function buildProxyUrl(url) {
 }
 
 /**
+ * @param {string} url
+ */
+export function shouldProxyFirst(url) {
+  try {
+    return /\.pinimg\.com$/i.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * @param {Blob} blob
+ */
+export async function isValidImageBlob(blob) {
+  if (!blob?.size || blob.size < 128) {
+    return false;
+  }
+  const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  if (header[0] === 0xff && header[1] === 0xd8) return true;
+  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47) {
+    return true;
+  }
+  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) {
+    return true;
+  }
+  if (
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * @param {typeof fetch} fetchImpl
  * @param {string} url
  */
@@ -165,13 +206,14 @@ async function tryFetchBlob(fetchImpl, url) {
   const response = await fetchImpl(url, {
     credentials: "omit",
     referrerPolicy: "no-referrer",
+    mode: "cors",
   });
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
   const blob = await response.blob();
-  if (!blob.size) {
-    throw new Error("empty response");
+  if (!(await isValidImageBlob(blob))) {
+    throw new Error("response is not a valid image");
   }
   return blob;
 }
@@ -188,11 +230,11 @@ export async function fetchImageBlob(downloadUrl, fetchImpl = globalThis.fetch) 
     throw new Error("fetch is not available");
   }
 
-  const attempts = [downloadUrl];
   const proxyUrl = buildProxyUrl(downloadUrl);
-  if (proxyUrl !== downloadUrl) {
-    attempts.push(proxyUrl);
-  }
+  const attempts =
+    shouldProxyFirst(downloadUrl) && proxyUrl !== downloadUrl
+      ? [proxyUrl, downloadUrl]
+      : [downloadUrl, proxyUrl].filter((value, index, list) => value && list.indexOf(value) === index);
 
   let lastError;
   for (const url of attempts) {

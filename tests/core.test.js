@@ -11,7 +11,9 @@ import {
   buildProxyUrl,
   fetchImageBlob,
   guessExtension,
+  isValidImageBlob,
   parsePinterestSource,
+  shouldProxyFirst,
   toOriginalUrl,
 } from "../core.js";
 
@@ -19,16 +21,16 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const widgetPin = JSON.parse(readFileSync(join(__dirname, "fixtures", "widget-pin.json"), "utf8"));
 
 test("parsePinterestSource maps profile root to Unorganized Ideas", () => {
-  const target = parsePinterestSource("https://www.pinterest.com/itmedaylen/");
-  assert.equal(target.username, "itmedaylen");
+  const target = parsePinterestSource("https://www.pinterest.com/nationalgeographic/");
+  assert.equal(target.username, "nationalgeographic");
   assert.equal(target.slug, "_quick_saves");
   assert.equal(target.label, "Unorganized Ideas");
 });
 
 test("parsePinterestSource maps board subdirectory", () => {
-  const target = parsePinterestSource("https://www.pinterest.com/itmedaylen/stuff-to-buy/");
-  assert.equal(target.slug, "stuff-to-buy");
-  assert.equal(target.sourcePath, "/itmedaylen/stuff-to-buy/");
+  const target = parsePinterestSource("https://www.pinterest.com/nationalgeographic/animals/");
+  assert.equal(target.slug, "animals");
+  assert.equal(target.sourcePath, "/nationalgeographic/animals/");
 });
 
 test("toOriginalUrl upgrades Pinterest CDN sizes", () => {
@@ -74,6 +76,30 @@ test("buildExportBookmarklet returns a javascript: URL", () => {
   const href = buildExportBookmarklet();
   assert.match(href, /^javascript:/);
   assert.ok(href.length > 200);
+});
+
+test("shouldProxyFirst is true for pinimg CDN URLs", () => {
+  assert.equal(
+    shouldProxyFirst("https://i.pinimg.com/originals/b0/28/cb/file.jpg"),
+    true,
+  );
+});
+
+test("fetchImageBlob prefers proxy for pinimg URLs", async () => {
+  const directUrl =
+    "https://i.pinimg.com/originals/b0/28/cb/b028cbe3e430a57695749c518f8a7e95.jpg";
+  const calls = [];
+  const fetchImpl = async (url) => {
+    calls.push(url);
+    if (url.includes("images.weserv.nl")) {
+      return globalThis.fetch(url);
+    }
+    throw new TypeError("Failed to fetch");
+  };
+
+  const result = await fetchImageBlob(directUrl, fetchImpl);
+  assert.equal(result.proxied, true);
+  assert.match(calls[0], /images\.weserv\.nl/);
 });
 
 test("fetchImageBlob falls back to proxy when direct fetch is blocked", async () => {
