@@ -1,0 +1,17 @@
+{
+  "id": "309763280603783034",
+  "description": "Sample product pin",
+  "title": "Stuff item",
+  "images": {
+    "236x": {
+      "url": "https://i.pinimg.com/236x/b0/28/cb/b028cbe3e430a57695749c518f8a7e95.jpg",
+      "width": 200,
+      "height": 200
+    },
+    "564x": {
+      "url": "https://i.pinimg.com/564x/b0/28/cb/b028cbe3e430a57695749c518f8a7e95.jpg",
+      "width": 200,
+      "height": 200
+    }
+  }
+}

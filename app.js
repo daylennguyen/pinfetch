@@ -1,5 +1,14 @@
-const WIDGET_BASE = "https://widgets.pinterest.com/v3/pidgets/boards";
-const RESOURCE_BASE = "https://www.pinterest.com/resource";
+import {
+  WIDGET_BASE,
+  RESOURCE_BASE,
+  assetsFromPin,
+  assetsFromWidgetPin,
+  buildExportBookmarklet,
+  fetchImageBlob,
+  guessExtension,
+  parsePinterestSource,
+  sanitizeFileName,
+} from "./core.js";
 
 const form = document.getElementById("source-form");
 const sourceInput = document.getElementById("source-url");
@@ -20,21 +29,10 @@ const pinGrid = document.getElementById("pin-grid");
 const importJson = document.getElementById("import-json");
 const bookmarkletLink = document.getElementById("bookmarklet-link");
 
-/** @type {DownloadAsset[] | null} */
+/** @type {import("./core.js").DownloadAsset[] | null} */
 let currentAssets = null;
-/** @type {{ username: string, slug: string, label: string } | null} */
+/** @type {import("./core.js").PinterestTarget | null} */
 let currentTarget = null;
-
-/**
- * @typedef {Object} DownloadAsset
- * @property {string} pinId
- * @property {string} title
- * @property {string} previewUrl
- * @property {string} downloadUrl
- * @property {number} width
- * @property {number} height
- * @property {string} fileName
- */
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -74,65 +72,6 @@ function setProgress(value, caption) {
 }
 
 /**
- * @param {string} input
- * @returns {{ username: string, slug: string, label: string, sourcePath: string }}
- */
-function parsePinterestSource(input) {
-  let url;
-  try {
-    url = new URL(input);
-  } catch {
-    throw new Error("Enter a valid Pinterest URL.");
-  }
-
-  if (!/\.pinterest\./i.test(url.hostname)) {
-    throw new Error("Only Pinterest profile and board URLs are supported.");
-  }
-
-  const segments = url.pathname.split("/").filter(Boolean);
-  if (!segments.length) {
-    throw new Error("Could not read a username from that URL.");
-  }
-
-  const username = decodeURIComponent(segments[0]);
-  const reserved = new Set([
-    "pin",
-    "search",
-    "ideas",
-    "today",
-    "shopping",
-    "videos",
-    "login",
-    "business",
-  ]);
-  if (reserved.has(username)) {
-    throw new Error("That URL points at a Pinterest feature page, not a profile or board.");
-  }
-
-  const looksLikeBoard =
-    segments.length >= 2 &&
-    !["_saved", "_created", "pins", "boards"].includes(segments[1].toLowerCase());
-
-  if (looksLikeBoard) {
-    const slug = decodeURIComponent(segments[1]);
-    const label = slug.replace(/-/g, " ");
-    return {
-      username,
-      slug,
-      label: label.charAt(0).toUpperCase() + label.slice(1),
-      sourcePath: `/${username}/${slug}/`,
-    };
-  }
-
-  return {
-    username,
-    slug: "_quick_saves",
-    label: "Unorganized Ideas",
-    sourcePath: `/${username}/_quick_saves/`,
-  };
-}
-
-/**
  * @param {string} username
  * @param {string} slug
  */
@@ -152,6 +91,7 @@ async function fetchWidgetBoard(username, slug) {
 /**
  * @param {string} boardId
  * @param {string} sourcePath
+ * @param {string[] | null | undefined} bookmarks
  */
 async function fetchBoardFeedPage(boardId, sourcePath, bookmarks) {
   const options = {
@@ -183,7 +123,7 @@ async function fetchBoardFeedPage(boardId, sourcePath, bookmarks) {
   });
 
   if (!response.ok) {
-  const detail = await response.text();
+    const detail = await response.text();
     throw new Error(
       `Board feed request failed (${response.status}). ${detail.slice(0, 120)}`,
     );
@@ -244,167 +184,6 @@ async function paginateBoardFeed(boardId, sourcePath, expectedCount) {
 }
 
 /**
- * @param {unknown} value
- */
-function pickBestPreviewUrl(value) {
-  if (!value || typeof value !== "object") return "";
-  const images = /** @type {Record<string, { url?: string, width?: number }>} */ (value);
-  const preferred = ["564x", "474x", "236x", "736x", "170x"];
-  for (const key of preferred) {
-    if (images[key]?.url) return images[key].url;
-  }
-  const first = Object.values(images).find((entry) => entry?.url);
-  return first?.url ?? "";
-}
-
-/**
- * @param {string} url
- */
-function toOriginalUrl(url) {
-  if (!url) return url;
-  return url.replace(/\/(\d+x|\d+x\d+|60x60_RS|75x75_RS)\//, "/originals/");
-}
-
-/**
- * @param {string | undefined} url
- * @param {string | undefined} signature
- * @param {string[]} extraFallbacks
- */
-function buildOriginalCandidates(url, signature, extraFallbacks = []) {
-  /** @type {string[]} */
-  const candidates = [];
-  const add = (value) => {
-    if (!value || candidates.includes(value)) return;
-    candidates.push(value);
-  };
-
-  if (url) {
-    add(url);
-    add(toOriginalUrl(url));
-  }
-
-  if (signature && /^[0-9a-f]{16,}$/i.test(signature)) {
-    const base = `https://i.pinimg.com/originals/${signature.slice(0, 2)}/${signature.slice(2, 4)}/${signature.slice(4, 6)}/${signature}`;
-    for (const ext of ["jpg", "png", "webp"]) {
-      add(`${base}.${ext}`);
-    }
-  }
-
-  for (const extra of extraFallbacks) add(extra);
-  return candidates;
-}
-
-/**
- * @param {any} pin
- * @returns {DownloadAsset[]}
- */
-function assetsFromPin(pin) {
-  /** @type {DownloadAsset[]} */
-  const assets = [];
-  const pinId = String(pin.id ?? pin.node_id ?? "pin");
-  const title = (pin.title || pin.grid_title || pin.description || "Untitled pin")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-
-  const pushAsset = (url, signature, suffix, width, height) => {
-    const candidates = buildOriginalCandidates(url, signature);
-    if (!candidates.length) return;
-    const fileBase = `${pinId}${suffix}`;
-    assets.push({
-      pinId,
-      title,
-      previewUrl: candidates.find((item) => item.includes("/236x/") || item.includes("/564x/")) || candidates[0],
-      downloadUrl: candidates[0],
-      width: width || 0,
-      height: height || 0,
-      fileName: `${sanitizeFileName(fileBase)}.jpg`,
-    });
-  };
-
-  if (pin.images?.orig?.url) {
-    pushAsset(
-      pin.images.orig.url,
-      extractSignature(pin.images.orig.url),
-      "",
-      pin.images.orig.width,
-      pin.images.orig.height,
-    );
-  } else {
-    const fallback = pickBestPreviewUrl(pin.images);
-    pushAsset(fallback, extractSignature(fallback), "", 0, 0);
-  }
-
-  const story = pin.story_pin_data;
-  const pages = Array.isArray(story?.pages) ? story.pages : [];
-  pages.forEach((page, pageIndex) => {
-  const blocks = Array.isArray(page?.blocks) ? page.blocks : [];
-    blocks.forEach((block, blockIndex) => {
-      const image = block?.image;
-      const originals = image?.images?.originals ?? image?.images?.orig;
-      const signature = block?.image_signature || image?.image_signature;
-      const fallbackUrl =
-        originals?.url || pickBestPreviewUrl(image?.images) || pickBestPreviewUrl(block?.images);
-      pushAsset(
-        fallbackUrl,
-        signature || extractSignature(fallbackUrl),
-        `_story_${pageIndex + 1}_${blockIndex + 1}`,
-        originals?.width,
-        originals?.height,
-      );
-    });
-  });
-
-  const carousel = pin.carousel_data?.carousel_slots;
-  if (Array.isArray(carousel)) {
-    carousel.forEach((slot, index) => {
-      const slotImages = slot?.images ?? {};
-      const best = slotImages.orig ?? slotImages["736x"] ?? slotImages["564x"];
-      pushAsset(best?.url, slot?.id, `_carousel_${index + 1}`, best?.width, best?.height);
-    });
-  }
-
-  return assets.filter(
-    (asset, index, list) =>
-      list.findIndex((entry) => entry.downloadUrl === asset.downloadUrl) === index,
-  );
-}
-
-/**
- * @param {any} pin
- */
-function assetsFromWidgetPin(pin) {
-  const adapted = { ...pin };
-  const primary = pickBestPreviewUrl(pin.images);
-  adapted.images = {
-    ...(pin.images || {}),
-    orig: { url: toOriginalUrl(primary), width: 0, height: 0 },
-  };
-  return assetsFromPin(adapted);
-}
-
-/**
- * @param {string} url
- */
-function extractSignature(url) {
-  const match = url?.match(/\/([0-9a-f]{2})\/([0-9a-f]{2})\/([0-9a-f]{2})\/([0-9a-f]{16,})\./i);
-  if (!match) return "";
-  return match[4];
-}
-
-/**
- * @param {string} value
- */
-function sanitizeFileName(value) {
-  return value.replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/_+/g, "_");
-}
-
-function buildExportBookmarklet() {
-  const source = String.raw`(async()=>{const match=location.pathname.match(/^\/([^/]+)\/([^/]+)\/?/);if(!match){alert("Open a Pinterest board first. For Unorganized Ideas, use /USERNAME/_quick_saves/");return;}const username=decodeURIComponent(match[1]);const slug=decodeURIComponent(match[2]);const sourcePath="/"+username+"/"+slug+"/";const boardResponse=await fetch("/resource/BoardResource/get/?source_url="+encodeURIComponent(sourcePath)+"&data="+encodeURIComponent(JSON.stringify({options:{username,slug,field_set_key:"detailed"},context:{}})),{headers:{"X-Requested-With":"XMLHttpRequest",Accept:"application/json"}});const boardPayload=await boardResponse.json();const boardId=boardPayload.resource_response?.data?.id;if(!boardId){alert("Could not resolve that board.");return;}const pins=[];const seen=new Set();let bookmarks=null;for(let page=0;page<80;page+=1){const options={board_id:boardId,board_url:sourcePath,field_set_key:"react_grid_pin",page_size:50,redux_normalize_feed:true};if(bookmarks){options.bookmarks=bookmarks;}const feedResponse=await fetch("/resource/BoardFeedResource/get/?source_url="+encodeURIComponent(sourcePath)+"&data="+encodeURIComponent(JSON.stringify({options,context:{}})),{headers:{"X-Requested-With":"XMLHttpRequest",Accept:"application/json"}});const feedPayload=await feedResponse.json();const batch=feedPayload.resource_response?.data||[];let added=0;for(const pin of batch){const pinId=String(pin.id||"");if(!pinId||seen.has(pinId)){continue;}seen.add(pinId);pins.push(pin);added+=1;}const next=feedPayload.resource?.options?.bookmarks?.[0];if(!next||next==="-end-"||next.startsWith("Y2JOb25lO")||added===0){break;}bookmarks=[next];}const exportData={username,slug,sourcePath,boardName:boardPayload.resource_response?.data?.name,pinCount:boardPayload.resource_response?.data?.pin_count,pins,exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(exportData)],{type:"application/json"});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=username+"-"+slug+"-pinfetch.json";link.click();alert("Exported "+pins.length+" pins for Pinfetch.");})();`;
-  return `javascript:${encodeURIComponent(source)}`;
-}
-
-/**
  * @param {Event} event
  */
 async function importPinExport(event) {
@@ -455,7 +234,7 @@ async function importPinExport(event) {
 
 /**
  * @param {any[]} pins
- * @param {{ username: string, slug: string, label: string, sourcePath: string }} target
+ * @param {import("./core.js").PinterestTarget} target
  * @param {number} pinCount
  * @param {boolean} usedFeed
  * @param {boolean} fromImport
@@ -549,7 +328,7 @@ async function runScan(raw) {
 }
 
 /**
- * @param {DownloadAsset[]} assets
+ * @param {import("./core.js").DownloadAsset[]} assets
  * @param {number} pinCount
  * @param {number} loadedPins
  * @param {boolean} usedFeed
@@ -603,21 +382,34 @@ async function downloadZip() {
   setStage("Zipping");
   zipBtn.disabled = true;
   let completed = 0;
+  let saved = 0;
+  let proxied = 0;
+  let failed = 0;
 
   for (const asset of currentAssets) {
     try {
-      const blob = await fetchBinary(asset.downloadUrl);
-      const ext = guessExtension(blob.type, asset.downloadUrl);
+      const { blob, proxied: usedProxy } = await fetchImageBlob(asset.downloadUrl);
+      const ext = guessExtension(blob.type, asset.downloadUrl, usedProxy);
       const fileName = asset.fileName.replace(/\.[^.]+$/, "") + ext;
       folder.file(fileName, blob);
+      saved += 1;
+      if (usedProxy) proxied += 1;
     } catch (error) {
+      failed += 1;
       console.warn("Failed to fetch", asset.downloadUrl, error);
     }
     completed += 1;
     setProgress(
       Math.round((completed / currentAssets.length) * 100),
-      `Downloaded ${completed} / ${currentAssets.length} files…`,
+      `Packaging ${completed} / ${currentAssets.length} files…`,
     );
+  }
+
+  if (!saved) {
+    setStage("Error");
+    zipBtn.disabled = false;
+    statusNote.textContent = "Could not download any images. Try again or copy URLs instead.";
+    return;
   }
 
   const archive = await zip.generateAsync({ type: "blob" });
@@ -630,31 +422,11 @@ async function downloadZip() {
 
   setStage("Ready");
   zipBtn.disabled = false;
-  setProgress(100, "Zip download started.");
-}
-
-/**
- * @param {string} url
- */
-async function fetchBinary(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
-  }
-  return response.blob();
-}
-
-/**
- * @param {string} mime
- * @param {string} url
- */
-function guessExtension(mime, url) {
-  if (mime.includes("png")) return ".png";
-  if (mime.includes("webp")) return ".webp";
-  if (mime.includes("gif")) return ".gif";
-  if (mime.includes("jpeg") || mime.includes("jpg")) return ".jpg";
-  const match = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
-  return match ? `.${match[1].toLowerCase()}` : ".jpg";
+  setProgress(100, `Zip download started (${saved} files).`);
+  statusNote.textContent =
+    `${saved} file${saved === 1 ? "" : "s"} saved` +
+    (proxied ? ` (${proxied} via CORS-safe image proxy)` : "") +
+    (failed ? `; ${failed} failed.` : ".");
 }
 
 async function copyUrls() {

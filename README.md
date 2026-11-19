@@ -26,7 +26,10 @@ From GitHub Pages, Pinterest often exposes only the first page of pins in a boar
 
 ```bash
 npx --yes serve .
+npm test
 ```
+
+Zip downloads use a CORS-safe fallback (`images.weserv.nl`) when Pinterest’s CDN blocks browser `fetch()` from GitHub Pages.
 
 ## GitHub Pages
 
