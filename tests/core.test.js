@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
+  assetsFromPin,
   assetsFromWidgetPin,
   buildExportBookmarklet,
   buildOriginalCandidates,
@@ -48,6 +49,18 @@ test("buildOriginalCandidates adds signature-based originals", () => {
   );
   assert.ok(candidates.some((url) => url.includes("/originals/")));
   assert.ok(candidates.some((url) => url.endsWith(".png")));
+});
+
+test("assetsFromPin tolerates non-string Pinterest titles", () => {
+  const assets = assetsFromPin({
+    id: "123",
+    title: null,
+    grid_title: { text: "Grid title from object" },
+    description: 404,
+    images: { orig: { url: "https://i.pinimg.com/originals/b0/28/cb/file.jpg" } },
+  });
+  assert.equal(assets.length, 1);
+  assert.equal(assets[0].title, "Grid title from object");
 });
 
 test("assetsFromWidgetPin builds a originals download URL", () => {

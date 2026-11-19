@@ -106,6 +106,24 @@ export function sanitizeFileName(value) {
 
 /**
  * @param {unknown} value
+ * @param {string} [fallback]
+ */
+export function coercePinText(value, fallback = "") {
+  if (value == null || value === "") return fallback;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object") {
+    const record = /** @type {Record<string, unknown>} */ (value);
+    for (const key of ["text", "title", "description", "formatted"]) {
+      const nested = record[key];
+      if (typeof nested === "string" && nested.trim()) return nested;
+    }
+  }
+  return fallback;
+}
+
+/**
+ * @param {unknown} value
  */
 export function pickBestPreviewUrl(value) {
   if (!value || typeof value !== "object") return "";
@@ -278,7 +296,10 @@ export function assetsFromPin(pin) {
   /** @type {DownloadAsset[]} */
   const assets = [];
   const pinId = String(pin.id ?? pin.node_id ?? "pin");
-  const title = (pin.title || pin.grid_title || pin.description || "Untitled pin")
+  const title = coercePinText(
+    pin.title ?? pin.grid_title ?? pin.description,
+    "Untitled pin",
+  )
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 80);
